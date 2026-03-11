@@ -90,26 +90,3 @@ class PetExpressionAgent:
             )
         )
         return expression
-
-    def translate_image(
-        self,
-        image_path: Path,
-        pet_id: str,
-        pet_name: str,
-        species: str,
-        modality: str = "image",
-        locale: str = "en",
-        style: str = "default",
-    ) -> ExpressionResult:
-        return self.express_image(
-            image_path=image_path,
-            pet_id=pet_id,
-            pet_name=pet_name,
-            species=species,
-            modality=modality,
-            locale=locale,
-            style=style,
-        )
-
-
-PetTranslateAgent = PetExpressionAgent
