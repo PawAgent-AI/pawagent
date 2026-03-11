@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pawagent"
+version = "0.1.0"
+description = "A Python library for building AI systems that understand pets."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "google-genai>=1.30.0,<2",
+  "openai>=1.99.0,<2",
+  "pillow>=10,<12",
+  "pydantic>=2.7,<3",
+]
+
+[project.optional-dependencies]
+identity = [
+  "pillow>=10,<12",
+  "torch>=2.4,<3",
+  "torchvision>=0.19,<1",
+  "open-clip-torch>=2.26,<3",
+]
+
+[project.scripts]
+pawagent = "cli.main:main"
+
+[tool.setuptools]
+packages = [
+  "cli",
+  "pawagent",
+  "pawagent.core",
+  "pawagent.models",
+  "pawagent.providers",
+  "pawagent.vision",
+  "pawagent.audio",
+  "pawagent.video",
+  "pawagent.memory",
+  "pawagent.identity",
+  "pawagent.personality",
+  "pawagent.agents",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
