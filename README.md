@@ -1,343 +1,271 @@
-
 # PawAgent
 
-**PawAgent** is an open‑source Python framework for building AI systems that understand pets.
+PawAgent is a Python framework for pet understanding from images and short videos.
 
-It provides reusable AI capabilities such as:
+It provides a reusable analysis stack for:
 
-- Pet emotion analysis
-- Pet behavior interpretation
-- Pet motivation prediction
-- Pet expression rendering
+- Emotion analysis
+- Behavior analysis
+- Motivation prediction
+- Expression rendering
 - Pet identity enrollment and verification
-- Pet image and short-video analysis
 
-Supported image inputs include common formats such as `JPG`, `PNG`, `WEBP`, and `HEIC/HEIF`.
-`HEIC/HEIF` files are decoded locally and normalized before provider upload or identity fingerprinting.
-On macOS, PawAgent falls back to the system `sips` converter if `pillow-heif` is not installed.
+PawAgent is a library, not a web service. It is intended to sit underneath a separate runtime or application layer.
 
-PawAgent is designed as a **pure Python library**, not a web service.  
-Runtime services, APIs, and deployment are implemented in a separate project (e.g. `pawagent-service`).
+## Status
 
----
+- Core media analysis: implemented
+- Image and short-video task views: implemented
+- Identity verification: implemented
+- Real local identity path (`maskrcnn + openclip`): implemented
+- Audio: internal extension path, not a primary user-facing workflow
+- Live streaming: out of scope for the current product surface
 
-# Vision
+## Why This Project
 
-Pets communicate through body posture, sounds, and behavior.  
-PawAgent aims to provide a **Human–Pet Interface** powered by AI.
+Most pet-AI demos collapse everything into one opaque caption. PawAgent instead separates:
 
-Pet Signals → PawAgent AI → Human Understanding
+- direct observations
+- second-layer inference
+- human-readable rendering
 
-The framework enables developers to build applications that translate pet signals into meaningful insights.
+That makes the results easier to cache, explain, reuse, and evaluate.
 
----
+## Core Model
 
-# Core Principles
+One image or short video produces one unified analysis result:
 
-### 1. Library First
-PawAgent is a **framework**, not a backend service.
-
-### 2. Stateless AI Capabilities
-Modules such as `vision` and `video` are **stateless capability layers**.
-
-### 3. Clear Layer Separation
-
-Task Views  
-↓  
-Unified Multimodal Analysis  
-↓  
-Capabilities (vision / video)  
-↓  
-Providers (model connectors)
-
-Additional supporting layers:
-
-Memory / Cache → source records and reusable analysis results  
-Identity → pet cropping, visual fingerprinting, and pet-id verification  
-Models → shared data schemas
-
-### 4. Strong Data Schemas
-All shared data structures use **Pydantic models**.
-
----
-
-# Repository Structure
-
-pawagent/
-├─ README.md
-├─ LICENSE
-├─ pyproject.toml
-├─ docs/
-├─ tests/
-├─ examples/
-├─ cli/
-└─ pawagent/
-   ├─ core/
-   ├─ models/
-   ├─ providers/
-   ├─ vision/
-   ├─ audio/
-   ├─ video/
-   ├─ memory/
-   ├─ personality/
-   └─ agents/
-
----
-
-# Architecture Layers
-
-## Providers
-Location: pawagent/providers/
-
-Responsible for connecting PawAgent to external AI models.
-
-Examples:
-- OpenAI
-- Gemini
-- Anthropic
-- Local models
-
-Responsibilities:
-- send inference requests
-- normalize outputs
-- abstract model APIs
-
-Providers contain **no business logic**.
-
----
-
-## Capability Modules
-
-Locations:
-
-vision/  
-video/
-
-Responsibilities:
-- preprocess inputs
-- call providers
-- normalize modality-specific outputs into a shared semantic structure
-
-Example output:
-
+```json
 {
-  "emotion": {...},
-  "behavior": {...},
-  "motivation": {...},
-  "expression": {...},
-  "evidence": [...]
+  "emotion": {},
+  "behavior": {},
+  "motivation": {},
+  "expression": {},
+  "evidence": []
 }
+```
 
-Capabilities must be **stateless**.
+Task-specific agents then read from that shared result instead of re-calling the model.
 
----
-
-## Models
-
-Location:
-
-pawagent/models/
-
-Defines domain data structures using Pydantic.
-
-Examples:
-
-- Pet
-- ImageInput
-- MoodResult
-- AnalysisResult
-- PersonalityProfile
-
-These models form the **shared data language** of PawAgent.
-
----
-
-## Memory
-
-Location:
-
-pawagent/memory/
-
-Responsibilities:
-
-- store source analysis history
-- cache unified analysis results by content hash
-- reuse existing analysis for different task views
-- persist long-term personality snapshots
-
-Memory does not perform AI inference.
-
-## Identity
-
-Location: `pawagent/identity/`
-
-Responsibilities:
-
-- crop or segment the pet subject before identity comparison
-- generate a reusable visual fingerprint embedding
-- store per-pet reference profiles
-- verify whether a new image likely matches an existing `pet-id`
-
-Current implementation paths:
-
-- fallback path: `noop cropper + hash embedder`
-- intended production path: `maskrcnn cropper + openclip embedder`
-
-Identity is a verification layer. It should be treated as probabilistic matching, not absolute recognition.
-Enrollment is append-only: repeated `enroll-identity` calls for the same `pet-id` add reference views to the same profile.
-
----
-
-## Agents
-
-Location:
-
-pawagent/agents/
-
-Agents expose task-specific views over a shared analysis result.
-
-Examples:
-
-PetEmotionAgent  
-PetBehaviorAgent  
-PetMotivationAgent  
-PetExpressionAgent
-
-In the recommended architecture, a single analysis request produces the reusable result.
-Task-specific agents then read from that result and return only the requested slice.
-
-Example workflow:
-
-image / video  
-↓  
-modality analyzer  
-↓  
-unified analysis result  
-↓  
-cache by content hash  
-↓  
-task-specific agent view  
-↓  
-result  
-
-### Task Boundaries
-
-- Emotion: current state from available evidence
-- Behavior: current observable action or interaction tendency
-- Motivation: second-layer prediction inferred from emotion, behavior, and context
-- Expression: human-readable rendering grounded in the structured analysis
-
-Recommended result layering:
+Result layering:
 
 - First layer: `emotion`, `behavior`
 - Second layer: `motivation`
 - Expression layer: `expression`
 
----
+## Feature Matrix
 
-# CLI
+| Capability | Image | Short Video | Notes |
+| --- | --- | --- | --- |
+| Emotion | Yes | Yes | First-layer structured result |
+| Behavior | Yes | Yes | Video usually gives stronger behavior cues |
+| Motivation | Yes | Yes | Second-layer inference from emotion + behavior |
+| Expression | Yes | Yes | Stable rendering over structured analysis |
+| Identity | Yes | No | Separate verification pipeline |
+| Audio | Internal | Internal | Not a primary user-facing workflow |
 
-Example command:
+## Quick Start
 
-pawagent analyze-emotion dog.jpg
+Install for development:
 
-Short-video example:
+```bash
+pip install -e .
+```
 
-pawagent analyze-behavior clip.mp4 --modality video
+Run the mock provider:
 
-Example output:
+```bash
+.venv/bin/python -m cli.main analyze-emotion dog.jpg --pet-id pet-1 --pet-name Milo
+.venv/bin/python -m cli.main analyze-behavior clip.mp4 --pet-id pet-1 --pet-name Milo --modality video
+.venv/bin/python -m cli.main express-pet dog.jpg --pet-id pet-1 --pet-name Milo --locale zh-CN
+```
 
-Emotion: playful  
-Confidence: 0.87
+Install identity extras:
 
-Recommended architecture note:
+```bash
+pip install -e ".[identity]"
+```
 
-- A single call should produce a unified result for the content hash.
-- Repeated requests for emotion, behavior, motivation, or expression should read from cache.
-- Expression for the same content should be stable, not regenerated differently on every request.
-- Localized expression can be rendered from the structured result with a lightweight second pass and cached by content hash plus locale.
-- Identity verification uses a separate profile store and does not reuse emotion/behavior memory as an identity source of truth.
-- Current product focus is image and short-video analysis. Audio remains an internal extension path and is not a primary user-facing workflow.
+Run real local identity verification:
 
-OpenAI provider example:
+```bash
+.venv/bin/python -m cli.main enroll-identity tests/coconut.jpg --pet-id pet-1 --identity-cropper maskrcnn --identity-embedder openclip
+.venv/bin/python -m cli.main verify-identity tests/coconut.jpg --pet-id pet-1 --identity-cropper maskrcnn --identity-embedder openclip
+```
 
+## CLI Overview
+
+Task-view commands:
+
+```bash
+pawagent analyze-emotion <source> --modality image|video
+pawagent analyze-behavior <source> --modality image|video
+pawagent analyze-motivation <source> --modality image|video
+pawagent express-pet <source> --modality image|video
+```
+
+Identity commands:
+
+```bash
+pawagent enroll-identity <source> --pet-id <pet-id>
+pawagent verify-identity <source> --pet-id <pet-id>
+```
+
+### Example Commands
+
+Image emotion:
+
+```bash
+.venv/bin/python -m cli.main analyze-emotion dog.jpg --pet-id pet-1 --pet-name Milo
+```
+
+Short-video behavior:
+
+```bash
+.venv/bin/python -m cli.main analyze-behavior clip.mp4 --pet-id pet-1 --pet-name Milo --modality video
+```
+
+Localized expression:
+
+```bash
+.venv/bin/python -m cli.main express-pet dog.jpg --pet-id pet-1 --pet-name Milo --locale zh-CN
+```
+
+HEIC input:
+
+```bash
+.venv/bin/python -m cli.main analyze-emotion tests/coconut.heic --pet-id pet-1 --pet-name Coconut
+```
+
+## Image Formats
+
+Supported image inputs include:
+
+- `JPG`
+- `PNG`
+- `WEBP`
+- `HEIC`
+- `HEIF`
+
+`HEIC/HEIF` inputs are decoded locally before provider upload or identity fingerprinting.
+
+On macOS, PawAgent can fall back to the system `sips` converter when `pillow-heif` is unavailable.
+
+## Providers
+
+Built-in provider options:
+
+- `mock`
+- `openai`
+- `gemini`
+- `gemini-cli`
+- `codex`
+
+### OpenAI
+
+```bash
 export OPENAI_API_KEY=your_api_key
 .venv/bin/python -m cli.main --provider openai --openai-model gpt-4.1-mini analyze-emotion dog.jpg --pet-id pet-1 --pet-name Milo
+```
 
-Note:
-OpenAI Platform API uses API key authentication for server-side model calls. OAuth in OpenAI official docs applies to GPT Actions / connector-style user sign-in flows, not this library integration.
+OpenAI Platform API integration uses API keys for server-side model calls.
 
-Experimental Codex OAuth-backed provider example:
+### Gemini
 
-codex login
-.venv/bin/python -m cli.main --provider codex --codex-model gpt-5.4 analyze-emotion dog.jpg --pet-id pet-1 --pet-name Milo
-
-This provider does not call the public OpenAI Platform API directly.
-It shells out to the locally installed `codex` CLI and reuses its existing ChatGPT/Codex login state.
-
-Gemini provider example:
-
+```bash
 export GEMINI_API_KEY=your_api_key
 .venv/bin/python -m cli.main --provider gemini --gemini-model gemini-2.5-flash analyze-emotion dog.jpg --pet-id pet-1 --pet-name Milo
+```
 
-Experimental Gemini CLI provider example:
+### Codex CLI
 
+```bash
+codex login
+.venv/bin/python -m cli.main --provider codex --codex-model gpt-5.4 analyze-emotion dog.jpg --pet-id pet-1 --pet-name Milo
+```
+
+This provider shells out to the local `codex` CLI and reuses its existing login state.
+
+### Gemini CLI
+
+```bash
 gemini
 .venv/bin/python -m cli.main --provider gemini-cli --gemini-model gemini-2.5-flash analyze-emotion dog.jpg --pet-id pet-1 --pet-name Milo
+```
 
-Localized expression example:
+## Identity
 
-.venv/bin/python -m cli.main express-pet dog.jpg --pet-id pet-1 --pet-name Milo --locale zh-CN
+Identity is separate from emotion and behavior analysis. It uses its own profile store and should be treated as probabilistic verification, not biometric certainty.
 
-Video task-view example:
+Implementation paths:
 
-.venv/bin/python -m cli.main analyze-motivation clip.mp4 --pet-id pet-1 --pet-name Milo --modality video
+- Fallback path: `noop` cropper + `hash` embedder
+- Intended local path: `maskrcnn` cropper + `openclip` embedder
 
-The localized expression result is cached separately in `.pawagent/expression_records.json` by content hash, analysis version, locale, and style.
+Identity enrollment is append-only. Repeated `enroll-identity` calls for the same `pet-id` add new reference views instead of overwriting the profile.
 
-Identity enrollment example:
+### Real Local Identity Notes
 
-.venv/bin/python -m cli.main enroll-identity tests/coconut.jpg --pet-id pet-1
-
-Identity verification example:
-
-.venv/bin/python -m cli.main verify-identity tests/coconut.jpg --pet-id pet-1
-
-HEIC example:
-
-.venv/bin/python -m cli.main analyze-emotion tests/coconut.heic --pet-id pet-1 --pet-name Coconut
-.venv/bin/python -m cli.main enroll-identity tests/coconut.heic --pet-id pet-1 --identity-cropper maskrcnn --identity-embedder openclip
-
-Identity CLI defaults to the no-extra-dependency fallback path:
-
-- cropper: `noop`
-- embedder: `hash`
-
-To use the intended visual fingerprint pipeline, install the optional identity dependencies and switch to:
-
-- `--identity-cropper maskrcnn`
-- `--identity-embedder openclip`
-
-Real local identity pipeline notes:
-
-- the first `openclip` run may download model files into `.pawagent/hf-cache` and `.pawagent/torch-cache`
-- a Hugging Face unauthenticated-request warning is expected on first download and does not mean verification failed
-- `HF_TOKEN` is optional for public model downloads; it only improves rate limits and download reliability
+- the first `openclip` run may download files into `.pawagent/hf-cache` and `.pawagent/torch-cache`
+- a Hugging Face unauthenticated-request warning during first download is expected
+- `HF_TOKEN` is optional for public models and only improves download rate limits
 - verification compares against all enrolled references for the target `pet-id`
 
----
+## Architecture
 
-# Example Usage
+```text
+Task Views
+  -> Unified Analysis
+  -> Capability Layer (vision / video)
+  -> Provider Layer
 
+Supporting layers:
+  - Memory / cache
+  - Identity
+  - Shared models
+```
+
+Key design rules:
+
+- one source item should map to one unified analysis result
+- repeated task-view requests should reuse cached analysis
+- localized expression may use a lightweight second pass and is cached separately
+- identity should never reuse emotion/behavior memory as its source of truth
+
+## Repository Layout
+
+```text
+pawagent/
+├── cli/
+├── docs/
+├── examples/
+├── pawagent/
+│   ├── agents/
+│   ├── core/
+│   ├── expression/
+│   ├── identity/
+│   ├── memory/
+│   ├── models/
+│   ├── personality/
+│   ├── providers/
+│   ├── video/
+│   └── vision/
+├── tests/
+└── pyproject.toml
+```
+
+## Library Example
+
+```python
 from pathlib import Path
 
-from pawagent.agents.mood_agent import PetMoodAgent
+from pawagent.agents.mood_agent import PetEmotionAgent
 from pawagent.memory.store import InMemoryAnalysisStore
 from pawagent.personality.profiler import PersonalityProfiler
 from pawagent.providers.mock_provider import MockProvider
 
 memory = InMemoryAnalysisStore()
-agent = PetMoodAgent(
+agent = PetEmotionAgent(
     provider=MockProvider(),
     memory_store=memory,
     profiler=PersonalityProfiler(memory),
@@ -347,61 +275,28 @@ result = agent.analyze_image(
     image_path=Path("dog.jpg"),
     pet_id="pet-1",
     pet_name="Milo",
-    species="dog",
+    species="unknown",
 )
 
 print(result.mood.primary)
+```
 
----
+## Documentation
 
-# Installation
+- [Architecture](docs/architecture.md)
+- [Concepts](docs/concepts.md)
+- [Specification](docs/spec.md)
 
-pip install pawagent
+## Contributing
 
-For development:
+Useful contribution areas:
 
-pip install -e .
+- vision and video analysis
+- behavior and motivation quality
+- identity verification quality
+- provider integrations
+- documentation and benchmarks
 
-For identity features with real local visual fingerprinting:
+## License
 
-pip install -e ".[identity]"
-
----
-
-# Ecosystem
-
-PawAgent is designed to power higher-level systems such as:
-
-- pawagent-service (runtime service layer)
-- Paworld (consumer application)
-
-Architecture example:
-
-Paworld App  
-↓  
-pawagent-service  
-↓  
-PawAgent library  
-↓  
-AI Providers  
-
----
-
-# Contributing
-
-Contributions are welcome.
-
-Suggested areas:
-
-- vision models
-- audio analysis
-- behavior understanding
-- personality modeling
-- documentation
-- benchmarks
-
----
-
-# License
-
-MIT License
+MIT License. See [LICENSE](LICENSE).
