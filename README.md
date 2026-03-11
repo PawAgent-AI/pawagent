@@ -81,9 +81,9 @@ pip install -e .
 Run the mock provider:
 
 ```bash
-.venv/bin/python -m cli.main analyze-emotion dog.jpg --pet-id pet-1 --pet-name Milo
-.venv/bin/python -m cli.main analyze-behavior clip.mp4 --pet-id pet-1 --pet-name Milo --modality video
-.venv/bin/python -m cli.main express-pet dog.jpg --pet-id pet-1 --pet-name Milo --locale zh-CN
+pawagent analyze-emotion dog.jpg --pet-id pet-1 --pet-name Milo
+pawagent analyze-behavior clip.mp4 --pet-id pet-1 --pet-name Milo --modality video
+pawagent express-pet dog.jpg --pet-id pet-1 --pet-name Milo --locale zh-CN
 ```
 
 Install identity extras:
@@ -95,8 +95,8 @@ pip install -e ".[identity]"
 Run real local identity verification:
 
 ```bash
-.venv/bin/python -m cli.main enroll-identity tests/coconut.jpg --pet-id pet-1 --identity-cropper maskrcnn --identity-embedder openclip
-.venv/bin/python -m cli.main verify-identity tests/coconut.jpg --pet-id pet-1 --identity-cropper maskrcnn --identity-embedder openclip
+pawagent enroll-identity tests/coconut.jpg --pet-id pet-1 --identity-cropper maskrcnn --identity-embedder openclip
+pawagent verify-identity tests/coconut.jpg --pet-id pet-1 --identity-cropper maskrcnn --identity-embedder openclip
 ```
 
 ## CLI Overview
@@ -122,25 +122,25 @@ pawagent verify-identity <source> --pet-id <pet-id>
 Image emotion:
 
 ```bash
-.venv/bin/python -m cli.main analyze-emotion dog.jpg --pet-id pet-1 --pet-name Milo
+pawagent analyze-emotion dog.jpg --pet-id pet-1 --pet-name Milo
 ```
 
 Short-video behavior:
 
 ```bash
-.venv/bin/python -m cli.main analyze-behavior clip.mp4 --pet-id pet-1 --pet-name Milo --modality video
+pawagent analyze-behavior clip.mp4 --pet-id pet-1 --pet-name Milo --modality video
 ```
 
 Localized expression:
 
 ```bash
-.venv/bin/python -m cli.main express-pet dog.jpg --pet-id pet-1 --pet-name Milo --locale zh-CN
+pawagent express-pet dog.jpg --pet-id pet-1 --pet-name Milo --locale zh-CN
 ```
 
 HEIC input:
 
 ```bash
-.venv/bin/python -m cli.main analyze-emotion tests/coconut.heic --pet-id pet-1 --pet-name Coconut
+pawagent analyze-emotion tests/coconut.heic --pet-id pet-1 --pet-name Coconut
 ```
 
 ## Image Formats
@@ -171,7 +171,7 @@ Built-in provider options:
 
 ```bash
 export OPENAI_API_KEY=your_api_key
-.venv/bin/python -m cli.main --provider openai --openai-model gpt-4.1-mini analyze-emotion dog.jpg --pet-id pet-1 --pet-name Milo
+pawagent --provider openai --openai-model gpt-4.1-mini analyze-emotion dog.jpg --pet-id pet-1 --pet-name Milo
 ```
 
 OpenAI Platform API integration uses API keys for server-side model calls.
@@ -180,14 +180,14 @@ OpenAI Platform API integration uses API keys for server-side model calls.
 
 ```bash
 export GEMINI_API_KEY=your_api_key
-.venv/bin/python -m cli.main --provider gemini --gemini-model gemini-2.5-flash analyze-emotion dog.jpg --pet-id pet-1 --pet-name Milo
+pawagent --provider gemini --gemini-model gemini-2.5-flash analyze-emotion dog.jpg --pet-id pet-1 --pet-name Milo
 ```
 
 ### Codex CLI
 
 ```bash
 codex login
-.venv/bin/python -m cli.main --provider codex --codex-model gpt-5.4 analyze-emotion dog.jpg --pet-id pet-1 --pet-name Milo
+pawagent --provider codex --codex-model gpt-5.4 analyze-emotion dog.jpg --pet-id pet-1 --pet-name Milo
 ```
 
 This provider shells out to the local `codex` CLI and reuses its existing login state.
@@ -196,7 +196,7 @@ This provider shells out to the local `codex` CLI and reuses its existing login 
 
 ```bash
 gemini
-.venv/bin/python -m cli.main --provider gemini-cli --gemini-model gemini-2.5-flash analyze-emotion dog.jpg --pet-id pet-1 --pet-name Milo
+pawagent --provider gemini-cli --gemini-model gemini-2.5-flash analyze-emotion dog.jpg --pet-id pet-1 --pet-name Milo
 ```
 
 ## Identity
