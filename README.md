@@ -66,7 +66,13 @@ Result layering:
 
 ## Quick Start
 
-Install for development:
+Install from PyPI:
+
+```bash
+pip install pawagent
+```
+
+Install from source for development:
 
 ```bash
 pip install -e .
