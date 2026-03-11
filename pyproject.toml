@@ -4,16 +4,24 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pawagent"
-version = "0.1.0"
+version = "0.1.1"
 description = "A Python library for building AI systems that understand pets."
 readme = "README.md"
 requires-python = ">=3.11"
+license = "MIT"
+authors = [
+  { name = "Jack Fish", email = "okjackfish@gmail.com" },
+]
 dependencies = [
   "google-genai>=1.30.0,<2",
   "openai>=1.99.0,<2",
   "pillow>=10,<12",
   "pydantic>=2.7,<3",
 ]
+
+[project.urls]
+Homepage = "https://github.com/PawAgent-AI/pawagent"
+Repository = "https://github.com/PawAgent-AI/pawagent"
 
 [project.optional-dependencies]
 identity = [
@@ -31,6 +39,7 @@ packages = [
   "cli",
   "pawagent",
   "pawagent.core",
+  "pawagent.expression",
   "pawagent.models",
   "pawagent.providers",
   "pawagent.vision",
