@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import json
+from typing import Any
 
 from pawagent.providers.errors import ProviderOutputParseError
 
 
-def parse_json_text(output_text: str) -> dict[str, object]:
+def parse_json_text(output_text: str) -> dict[str, Any]:
     cleaned = output_text.strip()
     try:
         payload = json.loads(cleaned)
@@ -16,7 +17,7 @@ def parse_json_text(output_text: str) -> dict[str, object]:
     return payload
 
 
-def extract_embedded_json(text: str) -> dict[str, object]:
+def extract_embedded_json(text: str) -> dict[str, Any]:
     candidate = text.strip()
     if candidate.startswith("```"):
         candidate = candidate.removeprefix("```json").removeprefix("```").strip()
@@ -28,7 +29,7 @@ def extract_embedded_json(text: str) -> dict[str, object]:
         raise ProviderOutputParseError(f"Provider output was not valid JSON: {exc}") from exc
 
 
-def normalize_mood_payload(payload: dict[str, object]) -> dict[str, object]:
+def normalize_mood_payload(payload: dict[str, Any]) -> dict[str, Any]:
     try:
         return {
             "mood": str(payload["mood"]),
@@ -40,7 +41,7 @@ def normalize_mood_payload(payload: dict[str, object]) -> dict[str, object]:
         raise ProviderOutputParseError(f"Provider output did not match expected mood schema: {exc}") from exc
 
 
-def normalize_unified_payload(payload: dict[str, object]) -> dict[str, object]:
+def normalize_unified_payload(payload: dict[str, Any]) -> dict[str, Any]:
     try:
         species = payload.get("species", {})
         emotion = payload["emotion"]
@@ -98,12 +99,12 @@ def normalize_unified_payload(payload: dict[str, object]) -> dict[str, object]:
 
 
 def normalize_expression_payload(
-    payload: dict[str, object],
+    payload: dict[str, Any],
     *,
     default_grounding: list[str] | None = None,
     default_locale: str = "en",
     default_style: str = "default",
-) -> dict[str, object]:
+) -> dict[str, Any]:
     grounding = default_grounding or []
     try:
         return {
