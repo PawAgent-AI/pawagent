@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pawagent.providers.base import BaseProvider
+from pawagent.providers.claude_cli_provider import ClaudeCliProvider
 from pawagent.providers.claude_provider import ClaudeProvider
 from pawagent.providers.codex_provider import CodexProvider
 from pawagent.providers.gemini_provider import GeminiProvider
@@ -28,4 +29,6 @@ def build_provider(
         return CodexProvider(model=codex_model)
     if provider_name == "claude":
         return ClaudeProvider(model=claude_model)
+    if provider_name == "claude-cli":
+        return ClaudeCliProvider(model=claude_model)
     raise ValueError(f"Unsupported provider: {provider_name}")

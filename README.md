@@ -167,6 +167,7 @@ Built-in provider options:
 - `gemini-cli`
 - `codex`
 - `claude`
+- `claude-cli`
 
 ### OpenAI
 
@@ -192,6 +193,15 @@ pawagent --provider claude --claude-model claude-sonnet-4-6 analyze-emotion dog.
 ```
 
 Anthropic Claude API integration uses API keys for server-side model calls. Claude's strong vision capabilities make it well-suited for pet image analysis.
+
+### Claude CLI
+
+```bash
+claude
+pawagent --provider claude-cli --claude-model claude-sonnet-4-6 analyze-emotion dog.jpg --pet-id pet-1 --pet-name Milo
+```
+
+This provider shells out to the local `claude` CLI (Claude Code) and reuses its existing login state.
 
 ### Codex CLI
 

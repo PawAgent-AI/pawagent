@@ -50,7 +50,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--provider",
-        choices=["mock", "openai", "gemini", "gemini-cli", "codex", "claude"],
+        choices=["mock", "openai", "gemini", "gemini-cli", "codex", "claude", "claude-cli"],
         default="mock",
         help="Model provider to use.",
     )
