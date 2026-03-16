@@ -9,8 +9,8 @@ from pawagent.agents.expression_agent import PetExpressionAgent
 from pawagent.agents.mood_agent import PetEmotionAgent
 from pawagent.agents.motivation_agent import PetMotivationAgent
 from pawagent.expression.store import JsonExpressionLocalizationStore
-from pawagent.identity.cropper import NoOpPetCropper, TorchvisionMaskPetCropper
-from pawagent.identity.embedder import HashIdentityEmbedder, OpenClipIdentityEmbedder
+from pawagent.identity.cropper import NoOpPetCropper, PetCropper, TorchvisionMaskPetCropper
+from pawagent.identity.embedder import HashIdentityEmbedder, IdentityEmbedder, OpenClipIdentityEmbedder
 from pawagent.identity.service import PetIdentityService
 from pawagent.identity.store import JsonIdentityProfileStore
 from pawagent.agents.personality_agent import PetPersonalityAgent
@@ -141,11 +141,13 @@ def build_identity_service(
     embedder_name: str,
     match_threshold: float = 0.85,
 ) -> PetIdentityService:
+    cropper: PetCropper
     if cropper_name == "maskrcnn":
         cropper = TorchvisionMaskPetCropper()
     else:
         cropper = NoOpPetCropper()
 
+    embedder: IdentityEmbedder
     if embedder_name == "openclip":
         embedder = OpenClipIdentityEmbedder()
     else:
@@ -210,7 +212,7 @@ def main() -> int:
 
     if args.command == "analyze-behavior":
         profiler = PersonalityProfiler(memory, profile_store=profile_store)
-        agent = PetBehaviorAgent(provider=provider, memory_store=memory, profiler=profiler)
+        agent = PetBehaviorAgent(provider=provider, memory_store=memory, profiler=profiler)  # type: ignore[assignment]
         result = agent.analyze_media(
             path=Path(args.source_path),
             pet_id=args.pet_id,
@@ -236,7 +238,7 @@ def main() -> int:
 
     if args.command == "analyze-motivation":
         profiler = PersonalityProfiler(memory, profile_store=profile_store)
-        agent = PetMotivationAgent(provider=provider, memory_store=memory, profiler=profiler)
+        agent = PetMotivationAgent(provider=provider, memory_store=memory, profiler=profiler)  # type: ignore[assignment]
         result = agent.analyze_media(
             path=Path(args.source_path),
             pet_id=args.pet_id,
@@ -256,7 +258,7 @@ def main() -> int:
 
     if args.command == "profile-pet":
         profiler = PersonalityProfiler(memory, profile_store=profile_store)
-        agent = PetPersonalityAgent(memory_store=memory, profiler=profiler)
+        agent = PetPersonalityAgent(memory_store=memory, profiler=profiler)  # type: ignore[assignment]
         result = agent.get_profile(pet_id=args.pet_id)
         print(f"Pet ID: {result.pet_id}")
         for trait in result.traits:
@@ -265,7 +267,7 @@ def main() -> int:
 
     if args.command == "express-pet":
         profiler = PersonalityProfiler(memory, profile_store=profile_store)
-        agent = PetExpressionAgent(
+        agent = PetExpressionAgent(  # type: ignore[assignment]
             provider=provider,
             memory_store=memory,
             profiler=profiler,
@@ -318,7 +320,7 @@ def main() -> int:
             embedder_name=args.identity_embedder,
             match_threshold=args.match_threshold,
         )
-        result = service.verify_image(
+        result = service.verify_image(  # type: ignore[assignment]
             image_path=Path(args.source_path),
             pet_id=args.pet_id,
             species_hint=args.species,

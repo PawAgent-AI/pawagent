@@ -5,6 +5,7 @@ import os
 from base64 import b64encode
 import json
 from pathlib import Path
+from typing import Any
 
 from pawagent.core.images import load_provider_image_bytes
 from pawagent.models.analysis import UnifiedAnalysisResult
@@ -22,7 +23,7 @@ class ClaudeProvider(BaseProvider):
         self,
         model: str = "claude-sonnet-4-6",
         api_key: str | None = None,
-        client: object | None = None,
+        client: Any = None,
     ) -> None:
         self._model = model
         self._api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
@@ -105,7 +106,7 @@ class ClaudeProvider(BaseProvider):
         del video_path, prompt
         raise ProviderExecutionError("ClaudeProvider video analysis is not implemented yet.")
 
-    def _get_client(self) -> object:
+    def _get_client(self) -> Any:
         if self._client is not None:
             return self._client
         if not self._api_key:

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import Any, cast
 
 from pawagent.providers.errors import ProviderOutputParseError
 
@@ -14,7 +14,7 @@ def parse_json_text(output_text: str) -> dict[str, Any]:
         return extract_embedded_json(cleaned)
     if "response" in payload and isinstance(payload["response"], str):
         return extract_embedded_json(payload["response"])
-    return payload
+    return cast(dict[str, Any], payload)
 
 
 def extract_embedded_json(text: str) -> dict[str, Any]:
@@ -24,7 +24,7 @@ def extract_embedded_json(text: str) -> dict[str, Any]:
         if candidate.endswith("```"):
             candidate = candidate[:-3].strip()
     try:
-        return json.loads(candidate)
+        return cast(dict[str, Any], json.loads(candidate))
     except json.JSONDecodeError as exc:
         raise ProviderOutputParseError(f"Provider output was not valid JSON: {exc}") from exc
 

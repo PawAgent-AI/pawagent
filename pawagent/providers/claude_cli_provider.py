@@ -59,12 +59,12 @@ class ClaudeCliProvider(CliAgentProvider):
         try:
             envelope = json.loads(stdout)
         except (json.JSONDecodeError, TypeError):
-            return stdout
+            return str(stdout)
         if isinstance(envelope, dict) and "result" in envelope:
             return str(envelope["result"])
         if isinstance(envelope, dict) and "response" in envelope:
             return str(envelope["response"])
-        return stdout
+        return str(stdout)
 
     def analyze_audio(self, audio_path: str, prompt: str) -> dict[str, object]:
         del audio_path, prompt

@@ -5,6 +5,7 @@ import os
 from base64 import b64encode
 import json
 from pathlib import Path
+from typing import Any
 
 from pawagent.core.images import load_provider_image_bytes
 from pawagent.models.analysis import UnifiedAnalysisResult
@@ -22,7 +23,7 @@ class OpenAIProvider(BaseProvider):
         self,
         model: str = "gpt-4.1-mini",
         api_key: str | None = None,
-        client: object | None = None,
+        client: Any = None,
     ) -> None:
         self._model = model
         self._api_key = api_key or os.getenv("OPENAI_API_KEY")
@@ -52,7 +53,7 @@ class OpenAIProvider(BaseProvider):
             raise ProviderOutputParseError("OpenAI response did not contain output_text.")
         return self._parse_response(output_text)
 
-    def _get_client(self) -> object:
+    def _get_client(self) -> Any:
         if self._client is not None:
             return self._client
         if not self._api_key:

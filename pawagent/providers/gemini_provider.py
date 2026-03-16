@@ -4,6 +4,7 @@ import logging
 import os
 import json
 from pathlib import Path
+from typing import Any
 
 from pawagent.core.images import load_provider_image_bytes
 from pawagent.models.analysis import UnifiedAnalysisResult
@@ -21,7 +22,7 @@ class GeminiProvider(BaseProvider):
         self,
         model: str = "gemini-2.5-flash",
         api_key: str | None = None,
-        client: object | None = None,
+        client: Any = None,
     ) -> None:
         self._model = model
         self._api_key = api_key or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
@@ -44,7 +45,7 @@ class GeminiProvider(BaseProvider):
             raise ProviderOutputParseError("Gemini response did not contain text output.")
         return self._parse_response(output_text)
 
-    def _get_client(self) -> object:
+    def _get_client(self) -> Any:
         if self._client is not None:
             return self._client
         if not self._api_key:
