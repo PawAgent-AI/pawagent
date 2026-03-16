@@ -18,6 +18,7 @@ from pawagent.memory.store import JsonAnalysisStore
 from pawagent.personality.profiler import PersonalityProfiler
 from pawagent.personality.store import JsonPersonalityProfileStore
 from pawagent.providers.factory import build_provider
+from typing import Any
 
 
 DEFAULT_MEMORY_PATH = Path(".pawagent") / "analysis_records.json"
@@ -183,6 +184,9 @@ def main() -> int:
         args.claude_model,
     )
 
+    agent: Any
+    result: Any
+
     if args.command == "analyze-emotion":
         profiler = PersonalityProfiler(memory, profile_store=profile_store)
         agent = PetEmotionAgent(provider=provider, memory_store=memory, profiler=profiler)
@@ -212,7 +216,7 @@ def main() -> int:
 
     if args.command == "analyze-behavior":
         profiler = PersonalityProfiler(memory, profile_store=profile_store)
-        agent = PetBehaviorAgent(provider=provider, memory_store=memory, profiler=profiler)  # type: ignore[assignment]
+        agent = PetBehaviorAgent(provider=provider, memory_store=memory, profiler=profiler)
         result = agent.analyze_media(
             path=Path(args.source_path),
             pet_id=args.pet_id,
@@ -238,7 +242,7 @@ def main() -> int:
 
     if args.command == "analyze-motivation":
         profiler = PersonalityProfiler(memory, profile_store=profile_store)
-        agent = PetMotivationAgent(provider=provider, memory_store=memory, profiler=profiler)  # type: ignore[assignment]
+        agent = PetMotivationAgent(provider=provider, memory_store=memory, profiler=profiler)
         result = agent.analyze_media(
             path=Path(args.source_path),
             pet_id=args.pet_id,
@@ -258,7 +262,7 @@ def main() -> int:
 
     if args.command == "profile-pet":
         profiler = PersonalityProfiler(memory, profile_store=profile_store)
-        agent = PetPersonalityAgent(memory_store=memory, profiler=profiler)  # type: ignore[assignment]
+        agent = PetPersonalityAgent(memory_store=memory, profiler=profiler)
         result = agent.get_profile(pet_id=args.pet_id)
         print(f"Pet ID: {result.pet_id}")
         for trait in result.traits:
@@ -267,7 +271,7 @@ def main() -> int:
 
     if args.command == "express-pet":
         profiler = PersonalityProfiler(memory, profile_store=profile_store)
-        agent = PetExpressionAgent(  # type: ignore[assignment]
+        agent = PetExpressionAgent(
             provider=provider,
             memory_store=memory,
             profiler=profiler,
@@ -320,7 +324,7 @@ def main() -> int:
             embedder_name=args.identity_embedder,
             match_threshold=args.match_threshold,
         )
-        result = service.verify_image(  # type: ignore[assignment]
+        result = service.verify_image(
             image_path=Path(args.source_path),
             pet_id=args.pet_id,
             species_hint=args.species,
