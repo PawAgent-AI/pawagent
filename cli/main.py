@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+from importlib.metadata import version as _pkg_version
 from pathlib import Path
 
 from pawagent.agents.behavior_agent import PetBehaviorAgent
@@ -29,6 +30,7 @@ DEFAULT_IDENTITY_PATH = Path(".pawagent") / "identity_profiles.json"
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="pawagent")
+    parser.add_argument("--version", action="version", version=f"%(prog)s {_pkg_version('pawagent')}")
     parser.add_argument(
         "--memory-path",
         default=str(DEFAULT_MEMORY_PATH),
