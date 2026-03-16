@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pawagent.providers.base import BaseProvider
+from pawagent.providers.claude_provider import ClaudeProvider
 from pawagent.providers.codex_provider import CodexProvider
 from pawagent.providers.gemini_provider import GeminiProvider
 from pawagent.providers.gemini_cli_provider import GeminiCliProvider
@@ -13,6 +14,7 @@ def build_provider(
     openai_model: str,
     codex_model: str,
     gemini_model: str,
+    claude_model: str = "claude-sonnet-4-6",
 ) -> BaseProvider:
     if provider_name == "mock":
         return MockProvider()
@@ -24,4 +26,6 @@ def build_provider(
         return GeminiCliProvider(model=gemini_model)
     if provider_name == "codex":
         return CodexProvider(model=codex_model)
+    if provider_name == "claude":
+        return ClaudeProvider(model=claude_model)
     raise ValueError(f"Unsupported provider: {provider_name}")

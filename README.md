@@ -166,6 +166,7 @@ Built-in provider options:
 - `gemini`
 - `gemini-cli`
 - `codex`
+- `claude`
 
 ### OpenAI
 
@@ -182,6 +183,15 @@ OpenAI Platform API integration uses API keys for server-side model calls.
 export GEMINI_API_KEY=your_api_key
 pawagent --provider gemini --gemini-model gemini-2.5-flash analyze-emotion dog.jpg --pet-id pet-1 --pet-name Milo
 ```
+
+### Claude
+
+```bash
+export ANTHROPIC_API_KEY=your_api_key
+pawagent --provider claude --claude-model claude-sonnet-4-6 analyze-emotion dog.jpg --pet-id pet-1 --pet-name Milo
+```
+
+Anthropic Claude API integration uses API keys for server-side model calls. Claude's strong vision capabilities make it well-suited for pet image analysis.
 
 ### Codex CLI
 

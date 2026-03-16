@@ -50,7 +50,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--provider",
-        choices=["mock", "openai", "gemini", "gemini-cli", "codex"],
+        choices=["mock", "openai", "gemini", "gemini-cli", "codex", "claude"],
         default="mock",
         help="Model provider to use.",
     )
@@ -68,6 +68,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--gemini-model",
         default="gemini-2.5-flash",
         help="Gemini model name when --provider gemini is used.",
+    )
+    parser.add_argument(
+        "--claude-model",
+        default="claude-sonnet-4-6",
+        help="Claude model name when --provider claude is used.",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
@@ -173,6 +178,7 @@ def main() -> int:
         args.openai_model,
         args.codex_model,
         args.gemini_model,
+        args.claude_model,
     )
 
     if args.command == "analyze-emotion":
