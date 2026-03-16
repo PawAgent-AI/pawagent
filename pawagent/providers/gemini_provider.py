@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 import json
 from pathlib import Path
@@ -11,6 +12,8 @@ from pawagent.providers.base import BaseProvider
 from pawagent.providers.errors import ProviderAuthenticationError, ProviderExecutionError, ProviderOutputParseError
 from pawagent.providers.parsing import normalize_expression_payload, normalize_unified_payload, parse_json_text
 from pawagent.vision.prompts import STRUCTURED_MOOD_OUTPUT_INSTRUCTIONS
+
+logger = logging.getLogger(__name__)
 
 
 class GeminiProvider(BaseProvider):
@@ -25,6 +28,7 @@ class GeminiProvider(BaseProvider):
         self._client = client
 
     def analyze_image(self, image: ImageInput, prompt: str) -> dict[str, object]:
+        logger.debug("Gemini analyzing image: %s (model=%s)", image.path, self._model)
         client = self._get_client()
         image_part = self._build_image_part(image.path)
         try:

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 from pawagent.models.analysis import ExpressionResult, MotivationResult, SpeciesAssessment, UnifiedAnalysisResult
@@ -8,12 +9,15 @@ from pawagent.models.mood import MoodResult
 from pawagent.providers.base import BaseProvider
 from pawagent.vision.prompts import build_video_analysis_prompt
 
+logger = logging.getLogger(__name__)
+
 
 class VideoAnalyzer:
     def __init__(self, provider: BaseProvider) -> None:
         self._provider = provider
 
     def analyze(self, path: Path, species: str) -> UnifiedAnalysisResult:
+        logger.debug("VideoAnalyzer processing video: %s (species=%s)", path, species)
         raw = self._provider.analyze_video(str(path), build_video_analysis_prompt(species))
         raw_species = raw.get("species")
         if not isinstance(raw_species, dict):

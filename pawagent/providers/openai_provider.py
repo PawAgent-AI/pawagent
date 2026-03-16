@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 from base64 import b64encode
 import json
@@ -12,6 +13,8 @@ from pawagent.providers.base import BaseProvider
 from pawagent.providers.errors import ProviderAuthenticationError, ProviderExecutionError, ProviderOutputParseError
 from pawagent.providers.parsing import normalize_expression_payload, normalize_unified_payload, parse_json_text
 from pawagent.vision.prompts import STRUCTURED_MOOD_OUTPUT_INSTRUCTIONS
+
+logger = logging.getLogger(__name__)
 
 
 class OpenAIProvider(BaseProvider):
@@ -26,6 +29,7 @@ class OpenAIProvider(BaseProvider):
         self._client = client
 
     def analyze_image(self, image: ImageInput, prompt: str) -> dict[str, object]:
+        logger.debug("OpenAI analyzing image: %s (model=%s)", image.path, self._model)
         client = self._get_client()
         input_image = self._build_input_image(image.path)
         try:

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import logging
 from pathlib import Path
 
 from pawagent.agents.behavior_agent import PetBehaviorAgent
@@ -118,6 +119,13 @@ def build_parser() -> argparse.ArgumentParser:
     verify_identity.add_argument("--identity-embedder", choices=["hash", "openclip"], default="hash")
     verify_identity.add_argument("--match-threshold", type=float, default=0.85)
 
+    parser.add_argument(
+        "--log-level",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR"],
+        default="WARNING",
+        help="Set logging verbosity.",
+    )
+
     return parser
 
 
@@ -149,6 +157,13 @@ def build_identity_service(
 def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
+
+    logging.basicConfig(
+        level=getattr(logging, args.log_level),
+        format="%(asctime)s %(name)s %(levelname)s %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+
     memory = JsonAnalysisStore(Path(args.memory_path))
     profile_store = JsonPersonalityProfileStore(Path(args.profile_path))
     expression_store = JsonExpressionLocalizationStore(Path(args.expression_path))

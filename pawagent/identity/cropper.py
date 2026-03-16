@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import logging
 import tempfile
 from pathlib import Path
 from typing import Protocol
 
 from pawagent.core.images import open_image
 from pawagent.models.identity import BoundingBox, CroppedPetImage
+
+logger = logging.getLogger(__name__)
 
 
 class PetCropper(Protocol):
@@ -39,11 +42,13 @@ class TorchvisionMaskPetCropper:
         self._model = None
 
     def crop_pet(self, image_path: Path, species_hint: str = "unknown") -> CroppedPetImage:
+        logger.debug("MaskRCNN cropping pet from %s (species_hint=%s)", image_path, species_hint)
         model = self._get_model()
         image, tensor = self._load_image(image_path)
         prediction = model([tensor.to(self._device)])[0]
         best = self._select_detection(prediction, species_hint=species_hint)
         if best is None:
+            logger.debug("No pet detected by MaskRCNN, falling back to NoOp cropper")
             return NoOpPetCropper().crop_pet(image_path=image_path, species_hint=species_hint)
 
         label, box, mask = best

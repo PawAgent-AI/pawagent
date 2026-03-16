@@ -295,6 +295,8 @@ print(result.mood.primary)
 
 ## Contributing
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions, code style guidelines, and how to submit pull requests.
+
 Useful contribution areas:
 
 - vision and video analysis

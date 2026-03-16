@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 from math import sqrt
 from pathlib import Path
 from typing import Protocol
 
 from pawagent.core.images import open_image
 from pawagent.models.identity import CroppedPetImage
+
+logger = logging.getLogger(__name__)
 
 
 class IdentityEmbedder(Protocol):
@@ -56,6 +59,7 @@ class OpenClipIdentityEmbedder:
         return f"openclip_{self._model_name}_{self._pretrained}".replace("/", "_")
 
     def embed_image(self, cropped_image: CroppedPetImage) -> list[float]:
+        logger.debug("OpenClip embedding image: %s", cropped_image.cropped_path)
         model, preprocess = self._get_model()
         try:
             import torch

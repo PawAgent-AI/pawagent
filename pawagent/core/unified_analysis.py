@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 from pawagent.core.content_hash import compute_content_hash
@@ -9,6 +10,7 @@ from pawagent.providers.base import BaseProvider
 from pawagent.video.analyzer import VideoAnalyzer
 from pawagent.vision.analyzer import VisionAnalyzer
 
+logger = logging.getLogger(__name__)
 
 ANALYSIS_VERSIONS = {
     "image": "unified_image_v1",
@@ -26,6 +28,7 @@ class UnifiedMediaAnalysisService:
         self._memory_store = memory_store
         self._vision = VisionAnalyzer(provider)
         self._video = VideoAnalyzer(provider)
+        logger.debug("Initialized UnifiedMediaAnalysisService with provider=%s", provider.__class__.__name__)
 
     def analyze(self, path: Path, pet_id: str, species: str, modality: str = "image") -> AnalysisRecord:
         normalized_modality = modality.strip().lower()
@@ -36,11 +39,13 @@ class UnifiedMediaAnalysisService:
         analysis_version = ANALYSIS_VERSIONS[normalized_modality]
         cached = self._memory_store.get_cached_analysis(content_hash=content_hash, analysis_version=analysis_version)
         if cached is not None:
+            logger.info("Cache hit for %s (hash=%s, pet_id=%s)", path, content_hash[:12], pet_id)
             if cached.pet_id != pet_id:
                 cached = cached.model_copy(update={"pet_id": pet_id, "source_path": str(path)})
                 self._memory_store.add_record(cached)
             return cached
 
+        logger.info("Analyzing %s source: %s (pet_id=%s, species=%s)", normalized_modality, path, pet_id, species)
         if normalized_modality == "image":
             analysis = self._vision.analyze(image_path=path, species=species)
         else:
@@ -58,6 +63,7 @@ class UnifiedMediaAnalysisService:
             metadata={"species": species, "modality": normalized_modality},
         )
         self._memory_store.add_record(record)
+        logger.info("Analysis complete for %s (emotion=%s, behavior=%s)", path, analysis.emotion.primary, analysis.behavior.label)
         return record
 
 

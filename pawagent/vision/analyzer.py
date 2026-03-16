@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 from pawagent.models.analysis import ExpressionResult, MotivationResult, SpeciesAssessment, UnifiedAnalysisResult
@@ -9,12 +10,15 @@ from pawagent.providers.base import BaseProvider
 from pawagent.vision.preprocess import prepare_image
 from pawagent.vision.prompts import build_vision_mood_prompt
 
+logger = logging.getLogger(__name__)
+
 
 class VisionAnalyzer:
     def __init__(self, provider: BaseProvider) -> None:
         self._provider = provider
 
     def analyze(self, image_path: Path, species: str) -> UnifiedAnalysisResult:
+        logger.debug("VisionAnalyzer processing image: %s (species=%s)", image_path, species)
         image = prepare_image(image_path)
         raw = self._provider.analyze_image(image=image, prompt=build_vision_mood_prompt(species))
         raw_species = raw.get("species")
