@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import io
 import subprocess
+import tempfile
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Callable
 
+from pawagent.core.images import is_heif_path, open_image
 from pawagent.models.media import ImageInput
 from pawagent.providers.base import BaseProvider
 from pawagent.providers.errors import ProviderExecutionError
@@ -50,4 +53,11 @@ class CliAgentProvider(BaseProvider, ABC):
         return normalize_unified_payload(parse_json_text(output_text))
 
     def resolve_image_path(self, image: ImageInput) -> Path:
-        return image.path.resolve()
+        path = image.path.resolve()
+        if not is_heif_path(path):
+            return path
+        with open_image(path) as img:
+            temp_dir = Path(tempfile.mkdtemp(prefix="pawagent-heif-"))
+            converted = temp_dir / f"{path.stem}.jpg"
+            img.convert("RGB").save(converted, format="JPEG", quality=95)
+            return converted
