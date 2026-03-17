@@ -41,7 +41,7 @@ class CodexProvider(CliAgentProvider):
             "read-only",
             "--skip-git-repo-check",
             "--image",
-            str(image.path),
+            str(self.resolve_image_path(image)),
             "--output-schema",
             str(schema_path),
             "--output-last-message",
