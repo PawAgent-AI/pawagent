@@ -5,6 +5,7 @@ import subprocess
 from pathlib import Path
 
 from pawagent.models.media import ImageInput
+from pawagent.providers import cli_base as cli_base_module
 from pawagent.providers.errors import ProviderExecutionError
 from pawagent.providers.codex_provider import CodexProvider
 
@@ -90,3 +91,45 @@ def test_codex_provider_surfaces_exec_failures(tmp_path: Path) -> None:
         assert "not logged in" in str(exc)
     else:
         raise AssertionError("Expected ProviderExecutionError for failed codex execution")
+
+
+def test_codex_provider_analyze_video_uses_storyboard_fallback(monkeypatch, tmp_path: Path) -> None:
+    storyboard_path = tmp_path / "storyboard.jpg"
+    storyboard_path.write_bytes(b"fake-storyboard")
+    seen: dict[str, object] = {}
+
+    def fake_runner(command: list[str], capture_output: bool, text: bool, check: bool) -> subprocess.CompletedProcess[str]:
+        del capture_output, text, check
+        seen["command"] = command
+        output_path = Path(command[command.index("--output-last-message") + 1])
+        output_path.write_text(
+            json.dumps(
+                {
+                    "emotion": {"label": "curious", "confidence": 0.8},
+                    "behavior": {"label": "exploring", "confidence": 0.76},
+                    "motivation": {"label": "exploring novelty", "confidence": 0.7},
+                    "expression": {
+                        "plain_text": "The pet appears curious and is exploring.",
+                        "pet_voice": "I am exploring what is here.",
+                        "confidence": 0.68,
+                    },
+                    "evidence": ["storyboard frame sequence"],
+                }
+            ),
+            encoding="utf-8",
+        )
+        return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+    monkeypatch.setattr(
+        cli_base_module.video_preprocess,
+        "prepare_video_storyboard",
+        lambda path: ImageInput(path=storyboard_path),
+    )
+    provider = CodexProvider(runner=fake_runner)
+
+    result = provider.analyze_video(str(tmp_path / "pet.mp4"), "Analyze this pet video")
+
+    assert result["behavior"]["label"] == "exploring"
+    command = seen["command"]
+    assert str(storyboard_path) in command
+    assert "storyboard generated from a video clip" in command[-1]

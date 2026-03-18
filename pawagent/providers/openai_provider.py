@@ -13,6 +13,7 @@ from pawagent.models.media import ImageInput
 from pawagent.providers.base import BaseProvider
 from pawagent.providers.errors import ProviderAuthenticationError, ProviderExecutionError, ProviderOutputParseError
 from pawagent.providers.parsing import normalize_expression_payload, normalize_unified_payload, parse_json_text
+from pawagent.video import preprocess as video_preprocess
 from pawagent.vision.prompts import STRUCTURED_MOOD_OUTPUT_INSTRUCTIONS
 
 logger = logging.getLogger(__name__)
@@ -132,5 +133,8 @@ class OpenAIProvider(BaseProvider):
         raise ProviderExecutionError("OpenAIProvider audio analysis is not implemented yet.")
 
     def analyze_video(self, video_path: str, prompt: str) -> dict[str, object]:
-        del video_path, prompt
-        raise ProviderExecutionError("OpenAIProvider video analysis is not implemented yet.")
+        try:
+            storyboard = video_preprocess.prepare_video_storyboard(Path(video_path))
+        except Exception as exc:
+            raise ProviderExecutionError(f"OpenAI video preprocessing failed: {exc}") from exc
+        return self.analyze_image(storyboard, video_preprocess.build_storyboard_prompt(prompt))

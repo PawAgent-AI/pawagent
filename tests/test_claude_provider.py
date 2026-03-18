@@ -8,6 +8,7 @@ from pawagent.providers.errors import (
     ProviderExecutionError,
     ProviderOutputParseError,
 )
+from pawagent.providers import claude_provider as claude_provider_module
 from pawagent.providers.claude_provider import ClaudeProvider
 
 
@@ -178,3 +179,24 @@ def test_claude_provider_render_expression_english_passthrough() -> None:
     result = provider.render_expression(analysis, locale="en")
     assert result["plain_text"] == "Happy dog playing."
     assert result["pet_voice"] == "I am happy!"
+
+
+def test_claude_provider_analyze_video_uses_storyboard_fallback(monkeypatch, tmp_path: Path) -> None:
+    storyboard_path = tmp_path / "storyboard.jpg"
+    storyboard_path.write_bytes(b"fake-storyboard")
+    client = _FakeClient(SAMPLE_RESPONSE)
+    monkeypatch.setattr(
+        claude_provider_module.video_preprocess,
+        "prepare_video_storyboard",
+        lambda path: ImageInput(path=storyboard_path),
+    )
+    provider = ClaudeProvider(client=client)
+
+    result = provider.analyze_video(str(tmp_path / "pet.mp4"), "Analyze this pet video")
+
+    assert result["emotion"]["label"] == "playful"
+    request = client.messages.last_request
+    assert request is not None
+    content = request["messages"][0]["content"]
+    assert content[0]["type"] == "image"
+    assert "storyboard generated from a video clip" in content[1]["text"]

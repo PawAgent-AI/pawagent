@@ -5,6 +5,7 @@ import subprocess
 from pathlib import Path
 
 from pawagent.models.media import ImageInput
+from pawagent.providers import cli_base as cli_base_module
 from pawagent.providers.errors import ProviderExecutionError
 from pawagent.providers.claude_cli_provider import ClaudeCliProvider
 
@@ -158,3 +159,30 @@ def test_claude_cli_provider_includes_allowed_tools(tmp_path: Path) -> None:
     assert "--allowedTools" in command
     tools_index = command.index("--allowedTools") + 1
     assert "Read" in command[tools_index]
+
+
+def test_claude_cli_provider_analyze_video_uses_storyboard_fallback(monkeypatch, tmp_path: Path) -> None:
+    storyboard_path = tmp_path / "storyboard.jpg"
+    storyboard_path.write_bytes(b"fake-storyboard")
+    seen: dict[str, object] = {}
+
+    def fake_runner(command: list[str], capture_output: bool, text: bool, check: bool) -> subprocess.CompletedProcess[str]:
+        del capture_output, text, check
+        seen["command"] = command
+        stdout = json.dumps({"result": json.dumps(SAMPLE_ANALYSIS)})
+        return subprocess.CompletedProcess(command, 0, stdout=stdout, stderr="")
+
+    monkeypatch.setattr(
+        cli_base_module.video_preprocess,
+        "prepare_video_storyboard",
+        lambda path: ImageInput(path=storyboard_path),
+    )
+    provider = ClaudeCliProvider(runner=fake_runner)
+
+    result = provider.analyze_video(str(tmp_path / "pet.mp4"), "Analyze this pet video")
+
+    assert result["emotion"]["label"] == "curious"
+    command = seen["command"]
+    prompt = command[command.index("-p") + 1]
+    assert str(storyboard_path.resolve()) in prompt
+    assert "storyboard generated from a video clip" in prompt

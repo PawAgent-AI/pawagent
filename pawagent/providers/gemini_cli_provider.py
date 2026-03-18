@@ -55,8 +55,7 @@ class GeminiCliProvider(CliAgentProvider):
         raise ProviderExecutionError("Gemini CLI provider audio analysis is not implemented yet.")
 
     def analyze_video(self, video_path: str, prompt: str) -> dict[str, object]:
-        del video_path, prompt
-        raise ProviderExecutionError("Gemini CLI provider video analysis is not implemented yet.")
+        return super().analyze_video(video_path, prompt)
 
     def render_expression(
         self,

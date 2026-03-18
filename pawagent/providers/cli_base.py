@@ -12,6 +12,7 @@ from pawagent.models.media import ImageInput
 from pawagent.providers.base import BaseProvider
 from pawagent.providers.errors import ProviderExecutionError
 from pawagent.providers.parsing import normalize_unified_payload, parse_json_text
+from pawagent.video import preprocess as video_preprocess
 
 
 class CliAgentProvider(BaseProvider, ABC):
@@ -34,6 +35,14 @@ class CliAgentProvider(BaseProvider, ABC):
 
         output_text = self.read_output(result=result)
         return self.parse_payload(output_text)
+
+    def analyze_video(self, video_path: str, prompt: str) -> dict[str, object]:
+        try:
+            storyboard = video_preprocess.prepare_video_storyboard(Path(video_path))
+        except Exception as exc:
+            raise ProviderExecutionError(f"{self.provider_label()} video preprocessing failed: {exc}") from exc
+        storyboard_prompt = video_preprocess.build_storyboard_prompt(prompt)
+        return self.analyze_image(storyboard, storyboard_prompt)
 
     @abstractmethod
     def build_command(self, image: ImageInput, prompt: str) -> list[str]:

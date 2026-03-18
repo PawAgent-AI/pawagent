@@ -5,6 +5,7 @@ import subprocess
 from pathlib import Path
 
 from pawagent.models.media import ImageInput
+from pawagent.providers import cli_base as cli_base_module
 from pawagent.providers.errors import ProviderExecutionError
 from pawagent.providers.gemini_cli_provider import GeminiCliProvider
 
@@ -54,3 +55,33 @@ def test_gemini_cli_provider_surfaces_failures(tmp_path: Path) -> None:
         assert "not authenticated" in str(exc)
     else:
         raise AssertionError("Expected ProviderExecutionError for failed Gemini CLI execution")
+
+
+def test_gemini_cli_provider_analyze_video_uses_storyboard_fallback(monkeypatch, tmp_path: Path) -> None:
+    storyboard_path = tmp_path / "storyboard.jpg"
+    storyboard_path.write_bytes(b"fake-storyboard")
+    seen: dict[str, object] = {}
+
+    def fake_runner(command: list[str], capture_output: bool, text: bool, check: bool) -> subprocess.CompletedProcess[str]:
+        del capture_output, text, check
+        seen["command"] = command
+        stdout = json.dumps(
+            {
+                "response": '```json\n{"emotion":{"label":"curious","confidence":0.82},"behavior":{"label":"observing","confidence":0.74},"motivation":{"label":"understanding the environment","confidence":0.68},"expression":{"plain_text":"The pet appears curious and is observing the environment.","pet_voice":"I am figuring out what is happening here.","confidence":0.69},"evidence":["storyboard frame sequence"]}\n```'
+            }
+        )
+        return subprocess.CompletedProcess(command, 0, stdout=stdout, stderr="")
+
+    monkeypatch.setattr(
+        cli_base_module.video_preprocess,
+        "prepare_video_storyboard",
+        lambda path: ImageInput(path=storyboard_path),
+    )
+    provider = GeminiCliProvider(runner=fake_runner)
+
+    result = provider.analyze_video(str(tmp_path / "pet.mp4"), "Analyze this pet video")
+
+    assert result["behavior"]["label"] == "observing"
+    command = seen["command"]
+    assert str(storyboard_path) in command[command.index("--prompt") + 1]
+    assert "storyboard generated from a video clip" in command[command.index("--prompt") + 1]

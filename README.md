@@ -16,6 +16,8 @@ PawAgent is a library, not a web service. It is intended to sit underneath a sep
 
 - Core media analysis: implemented
 - Image and short-video task views: implemented
+- Gemini API video analysis: implemented natively
+- OpenAI / Claude / CLI providers video analysis: implemented via local storyboard fallback
 - Identity verification: implemented
 - Real local identity path (`maskrcnn + openclip`): implemented
 - Audio: internal extension path, not a primary user-facing workflow
@@ -169,6 +171,12 @@ Built-in provider options:
 - `claude`
 - `claude-cli`
 
+Video support notes:
+
+- `gemini`: native video upload and analysis
+- `openai`, `claude`, `codex`, `gemini-cli`, `claude-cli`: local `ffmpeg` storyboard fallback, then image analysis
+- storyboard fallback requires local `ffmpeg` and `ffprobe`
+
 ### OpenAI
 
 ```bash
@@ -177,13 +185,17 @@ pawagent --provider openai --openai-model gpt-4.1-mini analyze-emotion dog.jpg -
 ```
 
 OpenAI Platform API integration uses API keys for server-side model calls.
+Video input is handled through the local storyboard fallback rather than a native OpenAI video understanding API.
 
 ### Gemini
 
 ```bash
 export GEMINI_API_KEY=your_api_key
 pawagent --provider gemini --gemini-model gemini-2.5-flash analyze-emotion dog.jpg --pet-id pet-1 --pet-name Milo
+pawagent --provider gemini --gemini-model gemini-2.5-flash analyze-behavior clip.mp4 --pet-id pet-1 --pet-name Milo --modality video
 ```
+
+Gemini uses native video upload for `--modality video`.
 
 ### Claude
 
@@ -193,6 +205,7 @@ pawagent --provider claude --claude-model claude-sonnet-4-6 analyze-emotion dog.
 ```
 
 Anthropic Claude API integration uses API keys for server-side model calls. Claude's strong vision capabilities make it well-suited for pet image analysis.
+Video input is handled through the local storyboard fallback.
 
 ### Claude CLI
 
@@ -202,6 +215,7 @@ pawagent --provider claude-cli --claude-model claude-sonnet-4-6 analyze-emotion 
 ```
 
 This provider shells out to the local `claude` CLI (Claude Code) and reuses its existing login state.
+Video input is handled through the local storyboard fallback.
 
 ### Codex CLI
 
@@ -211,6 +225,7 @@ pawagent --provider codex --codex-model gpt-5.4 analyze-emotion dog.jpg --pet-id
 ```
 
 This provider shells out to the local `codex` CLI and reuses its existing login state.
+Video input is handled through the local storyboard fallback.
 
 ### Gemini CLI
 
@@ -218,6 +233,8 @@ This provider shells out to the local `codex` CLI and reuses its existing login 
 gemini
 pawagent --provider gemini-cli --gemini-model gemini-2.5-flash analyze-emotion dog.jpg --pet-id pet-1 --pet-name Milo
 ```
+
+Video input is handled through the local storyboard fallback.
 
 ## Identity
 

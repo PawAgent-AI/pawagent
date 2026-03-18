@@ -8,6 +8,7 @@ from pawagent.providers.errors import (
     ProviderExecutionError,
     ProviderOutputParseError,
 )
+from pawagent.providers import openai_provider as openai_provider_module
 from pawagent.providers.openai_provider import OpenAIProvider
 
 
@@ -116,3 +117,26 @@ def test_openai_provider_rejects_missing_output_text(tmp_path: Path) -> None:
         assert "output_text" in str(exc)
     else:
         raise AssertionError("Expected ProviderOutputParseError")
+
+
+def test_openai_provider_analyze_video_uses_storyboard_fallback(monkeypatch, tmp_path: Path) -> None:
+    storyboard_path = tmp_path / "storyboard.jpg"
+    storyboard_path.write_bytes(b"fake-storyboard")
+    client = _FakeClient(
+        '{"emotion":{"label":"curious","confidence":0.8,"arousal":"medium","tags":["observant"],"alternatives":["alert"],"evidence":["frame sequence"],"uncertainty_note":"Storyboard input."},"behavior":{"label":"exploring","confidence":0.77,"target":"environment","intensity":"moderate","evidence":["frame sequence"],"alternatives":["observing"],"uncertainty_note":"Storyboard input.","notes":"Storyboard input"},"motivation":{"label":"exploring novelty","confidence":0.71,"alternatives":["checking environment"],"evidence":["frame sequence"],"uncertainty_note":"Storyboard input."},"expression":{"plain_text":"The pet appears curious and is exploring.","pet_voice":"I am exploring what is here.","tone":"curious","grounded_in":["frame sequence"],"confidence":0.69},"evidence":["frame sequence"]}'
+    )
+    monkeypatch.setattr(
+        openai_provider_module.video_preprocess,
+        "prepare_video_storyboard",
+        lambda path: ImageInput(path=storyboard_path),
+    )
+    provider = OpenAIProvider(client=client)
+
+    result = provider.analyze_video(str(tmp_path / "pet.mp4"), "Analyze this pet video")
+
+    assert result["behavior"]["label"] == "exploring"
+    request = client.responses.last_request
+    assert request is not None
+    content = request["input"][0]["content"]
+    assert "storyboard generated from a video clip" in content[0]["text"]
+    assert content[1]["type"] == "input_image"
