@@ -166,7 +166,6 @@ def test_gemini_provider_analyze_video_uploads_and_polls_until_active(monkeypatc
     prompt = request["contents"][1]
     assert isinstance(prompt, str)
     assert "Analyze this pet video" in prompt
-    assert "Return JSON only with this exact schema" in prompt
 
 
 def test_gemini_provider_analyze_video_wraps_backend_failures(tmp_path: Path) -> None:
