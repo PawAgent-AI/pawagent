@@ -1,3 +1,4 @@
+from pawagent.models.breed import BreedAlternative, BreedResult
 from pawagent.models.analysis import (
     AnalysisRecord,
     AnalysisResult,
@@ -21,6 +22,8 @@ from pawagent.models.pet import Pet
 
 __all__ = [
     "AnalysisRecord",
+    "BreedAlternative",
+    "BreedResult",
     "AnalysisResult",
     "BoundingBox",
     "CroppedPetImage",

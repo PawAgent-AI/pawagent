@@ -85,7 +85,8 @@ def build_vision_mood_prompt(species: str) -> str:
         f"{VISION_MOOD_PROMPT}\n\n"
         f"User-declared species hint: {normalized}\n"
         "If the hint conflicts with visible evidence, trust the visible animal and set mismatch_warning.\n\n"
-        f"{DOG_MOOD_PROMPT}\n\n{CAT_MOOD_PROMPT}\n\n{OTHER_PET_PROMPT}"
+        f"{DOG_MOOD_PROMPT}\n\n{CAT_MOOD_PROMPT}\n\n{OTHER_PET_PROMPT}\n\n"
+        f"{STRUCTURED_MOOD_OUTPUT_INSTRUCTIONS}"
     )
 
 
@@ -141,11 +142,45 @@ Species-specific guidance for cat videos:
 """.strip()
 
 
+BREED_IDENTIFICATION_PROMPT = """
+You are analyzing an image to identify the animal species and, where applicable, the breed.
+
+Task:
+- Identify the species of the animal in the image (e.g. dog, cat, red fox, capybara).
+- If the animal is a domestic species with recognized breeds (e.g. dog, cat), identify the most likely breed.
+- For wild animals or animals without recognized breed distinctions, leave breed null.
+- List up to three alternative breeds or species with their confidence scores.
+- List up to five observable physical traits that support your identification.
+
+Reasoning rules:
+- Base the identification only on visible physical features: coat color and pattern, body shape, ear shape, muzzle length, tail shape, size relative to context, and any distinctive markings.
+- If the image contains no animal, set species to "none" and breed to null with confidence 0.
+- If the animal is visible but the species or breed is ambiguous, lower confidence accordingly.
+- Do not infer emotion, behavior, or health state.
+
+Return JSON only with this exact schema:
+{
+  "species": "string",
+  "breed": "string or null",
+  "confidence": 0.0,
+  "alternatives": [{"breed": "string", "confidence": 0.0}],
+  "traits": ["string"]
+}
+
+Output constraints:
+- confidence must be a number between 0 and 1
+- alternatives must contain at most 3 entries
+- traits must contain at most 5 short descriptors
+- do not include markdown fences or extra keys
+""".strip()
+
+
 def build_video_analysis_prompt(species: str) -> str:
     normalized = species.strip().lower() or "unknown"
     return (
         f"{VIDEO_ANALYSIS_PROMPT}\n\n"
         f"User-declared species hint: {normalized}\n"
         "If the hint conflicts with visible evidence, trust the visible animal and set mismatch_warning.\n\n"
-        f"{DOG_VIDEO_PROMPT}\n\n{CAT_VIDEO_PROMPT}\n\n{OTHER_PET_PROMPT}"
+        f"{DOG_VIDEO_PROMPT}\n\n{CAT_VIDEO_PROMPT}\n\n{OTHER_PET_PROMPT}\n\n"
+        f"{STRUCTURED_MOOD_OUTPUT_INSTRUCTIONS}"
     )

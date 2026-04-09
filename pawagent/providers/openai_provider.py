@@ -14,7 +14,6 @@ from pawagent.providers.base import BaseProvider
 from pawagent.providers.errors import ProviderAuthenticationError, ProviderExecutionError, ProviderOutputParseError
 from pawagent.providers.parsing import normalize_expression_payload, normalize_unified_payload, parse_json_text
 from pawagent.video import preprocess as video_preprocess
-from pawagent.vision.prompts import STRUCTURED_MOOD_OUTPUT_INSTRUCTIONS
 
 logger = logging.getLogger(__name__)
 
@@ -74,10 +73,13 @@ class OpenAIProvider(BaseProvider):
         }
 
     def _build_prompt(self, prompt: str) -> str:
-        return f"{prompt}\n\n{STRUCTURED_MOOD_OUTPUT_INSTRUCTIONS}"
+        return prompt
 
     def _parse_response(self, output_text: str) -> dict[str, object]:
-        return normalize_unified_payload(parse_json_text(output_text))
+        payload = parse_json_text(output_text)
+        if "emotion" in payload:
+            return normalize_unified_payload(payload)
+        return payload
 
     def render_expression(
         self,

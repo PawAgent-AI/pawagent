@@ -9,7 +9,8 @@ from pawagent.providers.base import BaseProvider
 
 class MockProvider(BaseProvider):
     def analyze_image(self, image: ImageInput, prompt: str) -> dict[str, object]:
-        del prompt
+        if "identify the animal species" in prompt.lower():
+            return self._breed_payload(image.path.stem.lower())
         stem = image.path.stem.lower()
         observed_species = self._infer_species(stem)
 
@@ -390,6 +391,89 @@ class MockProvider(BaseProvider):
             "locale": normalized,
             "source_language": "en",
             "style": style,
+        }
+
+    def _breed_payload(self, stem: str) -> dict[str, object]:
+        if any(k in stem for k in ("golden", "retriever")):
+            return {
+                "species": "dog",
+                "breed": "Golden Retriever",
+                "confidence": 0.93,
+                "alternatives": [
+                    {"breed": "Labrador Retriever", "confidence": 0.05},
+                ],
+                "traits": ["golden coat", "broad head", "floppy ears", "athletic build"],
+            }
+        if any(k in stem for k in ("labrador", "lab")):
+            return {
+                "species": "dog",
+                "breed": "Labrador Retriever",
+                "confidence": 0.91,
+                "alternatives": [
+                    {"breed": "Golden Retriever", "confidence": 0.06},
+                ],
+                "traits": ["short dense coat", "otter tail", "broad skull", "wide muzzle"],
+            }
+        if any(k in stem for k in ("husky", "sled")):
+            return {
+                "species": "dog",
+                "breed": "Siberian Husky",
+                "confidence": 0.90,
+                "alternatives": [
+                    {"breed": "Alaskan Malamute", "confidence": 0.07},
+                ],
+                "traits": ["thick double coat", "erect triangular ears", "blue or multi-colored eyes", "bushy tail"],
+            }
+        if any(k in stem for k in ("persian",)):
+            return {
+                "species": "cat",
+                "breed": "Persian",
+                "confidence": 0.89,
+                "alternatives": [
+                    {"breed": "Exotic Shorthair", "confidence": 0.08},
+                ],
+                "traits": ["flat face", "long silky coat", "small ears", "round eyes"],
+            }
+        if any(k in stem for k in ("siamese",)):
+            return {
+                "species": "cat",
+                "breed": "Siamese",
+                "confidence": 0.92,
+                "alternatives": [
+                    {"breed": "Balinese", "confidence": 0.05},
+                ],
+                "traits": ["color-point coat", "blue almond eyes", "slender build", "wedge-shaped head"],
+            }
+        if any(k in stem for k in ("fox",)):
+            return {
+                "species": "red fox",
+                "breed": None,
+                "confidence": 0.88,
+                "alternatives": [
+                    {"breed": "arctic fox", "confidence": 0.06},
+                ],
+                "traits": ["reddish-orange coat", "white-tipped tail", "pointed muzzle", "upright ears"],
+            }
+        if any(k in stem for k in ("cat", "meow", "kitten", "luna", "tuna", "coconut")):
+            return {
+                "species": "cat",
+                "breed": "Domestic Shorthair",
+                "confidence": 0.75,
+                "alternatives": [
+                    {"breed": "Domestic Longhair", "confidence": 0.12},
+                    {"breed": "American Shorthair", "confidence": 0.08},
+                ],
+                "traits": ["short coat", "medium build"],
+            }
+        return {
+            "species": "dog",
+            "breed": "Mixed Breed",
+            "confidence": 0.70,
+            "alternatives": [
+                {"breed": "Labrador Mix", "confidence": 0.14},
+                {"breed": "Border Collie Mix", "confidence": 0.09},
+            ],
+            "traits": ["medium build", "short coat"],
         }
 
     def _infer_species(self, stem: str) -> str:

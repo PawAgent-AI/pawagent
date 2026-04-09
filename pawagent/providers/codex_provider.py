@@ -9,7 +9,6 @@ from pawagent.models.media import ImageInput
 from pawagent.providers.cli_base import CliAgentProvider
 from pawagent.providers.errors import ProviderExecutionError
 from pawagent.providers.parsing import normalize_expression_payload, parse_json_text
-from pawagent.vision.prompts import CODEX_MOOD_OUTPUT_INSTRUCTIONS
 
 
 class CodexProvider(CliAgentProvider):
@@ -28,7 +27,8 @@ class CodexProvider(CliAgentProvider):
         tmp_path = Path(tempfile.mkdtemp(prefix="pawagent-codex-"))
         schema_path = tmp_path / "output_schema.json"
         self._output_path = tmp_path / "result.json"
-        schema_path.write_text(json.dumps(self._output_schema(), indent=2), encoding="utf-8")
+        schema = self._breed_schema() if "identify the animal species" in prompt.lower() else self._output_schema()
+        schema_path.write_text(json.dumps(schema, indent=2), encoding="utf-8")
 
         return [
             self._codex_bin,
@@ -59,7 +59,7 @@ class CodexProvider(CliAgentProvider):
         return "Codex provider"
 
     def _build_prompt(self, prompt: str) -> str:
-        return f"{prompt}\n\n{CODEX_MOOD_OUTPUT_INSTRUCTIONS}"
+        return prompt
 
     def _output_schema(self) -> dict[str, object]:
         return {
@@ -121,6 +121,29 @@ class CodexProvider(CliAgentProvider):
                     },
                 },
                 "evidence": {"type": "array", "items": {"type": "string"}},
+            },
+        }
+
+    def _breed_schema(self) -> dict[str, object]:
+        return {
+            "type": "object",
+            "additionalProperties": False,
+            "required": ["species", "confidence"],
+            "properties": {
+                "species": {"type": "string"},
+                "breed": {"type": ["string", "null"]},
+                "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+                "alternatives": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "breed": {"type": "string"},
+                            "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+                        },
+                    },
+                },
+                "traits": {"type": "array", "items": {"type": "string"}},
             },
         }
 

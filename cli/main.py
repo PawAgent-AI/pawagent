@@ -5,6 +5,7 @@ import logging
 from importlib.metadata import version as _pkg_version
 from pathlib import Path
 
+from pawagent.breed_identifier import BreedIdentifier
 from pawagent.agents.behavior_agent import PetBehaviorAgent
 from pawagent.agents.expression_agent import PetExpressionAgent
 from pawagent.agents.mood_agent import PetEmotionAgent
@@ -126,6 +127,9 @@ def build_parser() -> argparse.ArgumentParser:
     verify_identity.add_argument("--identity-cropper", choices=["noop", "maskrcnn"], default="noop")
     verify_identity.add_argument("--identity-embedder", choices=["hash", "openclip"], default="hash")
     verify_identity.add_argument("--match-threshold", type=float, default=0.85)
+
+    identify_breed = subparsers.add_parser("identify-breed")
+    identify_breed.add_argument("source_path")
 
     parser.add_argument(
         "--log-level",
@@ -317,6 +321,20 @@ def main() -> int:
         print(f"Latest Source: {last.source_path}")
         print(f"Detected Species: {last.detected_species}")
         print(f"Embedding Version: {last.embedding_version}")
+        return 0
+
+    if args.command == "identify-breed":
+        identifier = BreedIdentifier(provider=provider)
+        result = identifier.identify(Path(args.source_path))
+        print(f"Species: {result.species}")
+        if result.breed:
+            print(f"Breed: {result.breed}")
+        print(f"Confidence: {result.confidence:.2f}")
+        if result.alternatives:
+            alts = ", ".join(f"{a.breed} ({a.confidence:.2f})" for a in result.alternatives)
+            print(f"Alternatives: {alts}")
+        if result.traits:
+            print(f"Traits: {', '.join(result.traits)}")
         return 0
 
     if args.command == "verify-identity":

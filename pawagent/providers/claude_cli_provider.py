@@ -8,7 +8,6 @@ from pawagent.models.media import ImageInput
 from pawagent.providers.cli_base import CliAgentProvider
 from pawagent.providers.errors import ProviderExecutionError
 from pawagent.providers.parsing import normalize_expression_payload, parse_json_text
-from pawagent.vision.prompts import STRUCTURED_MOOD_OUTPUT_INSTRUCTIONS
 
 
 class ClaudeCliProvider(CliAgentProvider):
@@ -50,8 +49,7 @@ class ClaudeCliProvider(CliAgentProvider):
         return (
             f"{prompt}\n\n"
             f"Analyze the local image file at this absolute path: {image_path}\n"
-            "You may read the file from the workspace if needed.\n\n"
-            f"{STRUCTURED_MOOD_OUTPUT_INSTRUCTIONS}"
+            "You may read the file from the workspace if needed."
         )
 
     def read_output(self, result) -> str:

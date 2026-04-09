@@ -59,7 +59,10 @@ class CliAgentProvider(BaseProvider, ABC):
         return "Unknown CLI execution error."
 
     def parse_payload(self, output_text: str) -> dict[str, object]:
-        return normalize_unified_payload(parse_json_text(output_text))
+        payload = parse_json_text(output_text)
+        if "emotion" in payload:
+            return normalize_unified_payload(payload)
+        return payload
 
     def resolve_image_path(self, image: ImageInput) -> Path:
         path = image.path.resolve()
