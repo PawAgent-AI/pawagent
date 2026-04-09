@@ -8,6 +8,7 @@ It provides a reusable analysis stack for:
 - Behavior analysis
 - Motivation prediction
 - Expression rendering
+- Breed and species identification
 - Pet identity enrollment and verification
 
 PawAgent is a library, not a web service. It is intended to sit underneath a separate runtime or application layer.
@@ -18,6 +19,7 @@ PawAgent is a library, not a web service. It is intended to sit underneath a sep
 - Image and short-video task views: implemented
 - Gemini API video analysis: implemented natively
 - OpenAI / Claude / CLI providers video analysis: implemented via local storyboard fallback
+- Breed and species identification: implemented
 - Identity verification: implemented
 - Real local identity path (`maskrcnn + openclip`): implemented
 - Audio: internal extension path, not a primary user-facing workflow
@@ -63,6 +65,7 @@ Result layering:
 | Behavior | Yes | Yes | Video usually gives stronger behavior cues |
 | Motivation | Yes | Yes | Second-layer inference from emotion + behavior |
 | Expression | Yes | Yes | Stable rendering over structured analysis |
+| Breed ID | Yes | No | Stateless, no pet-id needed |
 | Identity | Yes | No | Separate verification pipeline |
 | Audio | Internal | Internal | Not a primary user-facing workflow |
 
@@ -86,6 +89,7 @@ Run the mock provider:
 pawagent analyze-emotion dog.jpg --pet-id pet-1 --pet-name Milo
 pawagent analyze-behavior clip.mp4 --pet-id pet-1 --pet-name Milo --modality video
 pawagent express-pet dog.jpg --pet-id pet-1 --pet-name Milo --locale zh-CN
+pawagent identify-breed dog.jpg
 ```
 
 Install identity extras:
@@ -110,6 +114,7 @@ pawagent analyze-emotion <source> --modality image|video
 pawagent analyze-behavior <source> --modality image|video
 pawagent analyze-motivation <source> --modality image|video
 pawagent express-pet <source> --modality image|video
+pawagent identify-breed <source>
 ```
 
 Identity commands:
@@ -120,6 +125,12 @@ pawagent verify-identity <source> --pet-id <pet-id>
 ```
 
 ### Example Commands
+
+Breed identification:
+
+```bash
+pawagent identify-breed dog.jpg
+```
 
 Image emotion:
 
@@ -298,6 +309,20 @@ pawagent/
 ```
 
 ## Library Example
+
+Breed identification (stateless, no pet-id needed):
+
+```python
+from pathlib import Path
+from pawagent import BreedIdentifier
+from pawagent.providers.mock_provider import MockProvider
+
+identifier = BreedIdentifier(provider=MockProvider())
+result = identifier.identify(Path("dog.jpg"))
+print(result.species, result.breed, result.confidence)
+```
+
+Emotion analysis (with memory and personality):
 
 ```python
 from pathlib import Path
