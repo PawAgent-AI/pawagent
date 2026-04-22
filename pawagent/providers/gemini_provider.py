@@ -27,10 +27,16 @@ class GeminiProvider(BaseProvider):
         model: str = "gemini-2.5-flash",
         api_key: str | None = None,
         client: Any = None,
+        vertexai: bool = False,
+        project: str | None = None,
+        location: str | None = None,
     ) -> None:
         self._model = model
         self._api_key = api_key or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
         self._client = client
+        self._vertexai = vertexai or project is not None
+        self._project = project or os.getenv("GOOGLE_CLOUD_PROJECT")
+        self._location = location or os.getenv("GOOGLE_CLOUD_LOCATION")
 
     def analyze_image(self, image: ImageInput, prompt: str) -> dict[str, object]:
         logger.debug("Gemini analyzing image: %s (model=%s)", image.path, self._model)
@@ -73,12 +79,23 @@ class GeminiProvider(BaseProvider):
     def _get_client(self) -> Any:
         if self._client is not None:
             return self._client
-        if not self._api_key:
-            raise ProviderAuthenticationError("GEMINI_API_KEY or GOOGLE_API_KEY is required for GeminiProvider.")
 
         from google import genai
 
-        self._client = genai.Client(api_key=self._api_key)
+        if self._vertexai:
+            kwargs: dict[str, Any] = {"vertexai": True}
+            if self._project:
+                kwargs["project"] = self._project
+            if self._location:
+                kwargs["location"] = self._location
+            self._client = genai.Client(**kwargs)
+        elif self._api_key:
+            self._client = genai.Client(api_key=self._api_key)
+        else:
+            raise ProviderAuthenticationError(
+                "GeminiProvider requires either an API key (GEMINI_API_KEY / GOOGLE_API_KEY) "
+                "or Vertex AI configuration (vertexai=True with optional project/location)."
+            )
         return self._client
 
     def _build_image_part(self, path: Path) -> object:

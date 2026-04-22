@@ -81,17 +81,20 @@ def test_gemini_provider_normalizes_response_and_builds_request(tmp_path: Path) 
         assert image_part.inline_data.mime_type == "image/jpeg"
 
 
-def test_gemini_provider_requires_api_key_without_injected_client(monkeypatch) -> None:
+def test_gemini_provider_requires_api_key_or_vertexai_without_injected_client(monkeypatch) -> None:
     monkeypatch.delenv("GEMINI_API_KEY", raising=False)
     monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
+    monkeypatch.delenv("GOOGLE_CLOUD_PROJECT", raising=False)
+    monkeypatch.delenv("GOOGLE_CLOUD_LOCATION", raising=False)
     provider = GeminiProvider(api_key=None)
 
     try:
         provider._get_client()
     except ProviderAuthenticationError as exc:
-        assert "GEMINI_API_KEY" in str(exc)
+        assert "API key" in str(exc)
+        assert "Vertex AI" in str(exc)
     else:
-        raise AssertionError("Expected missing API key to raise ProviderAuthenticationError")
+        raise AssertionError("Expected missing credentials to raise ProviderAuthenticationError")
 
 
 def test_gemini_provider_wraps_backend_failures(tmp_path: Path) -> None:
@@ -216,3 +219,47 @@ def test_gemini_provider_analyze_video_rejects_missing_text_output(tmp_path: Pat
         assert "video response did not contain text output" in str(exc)
     else:
         raise AssertionError("Expected ProviderOutputParseError")
+
+
+def test_gemini_provider_vertexai_flag_from_project() -> None:
+    provider = GeminiProvider(project="my-project")
+    assert provider._vertexai is True
+    assert provider._project == "my-project"
+
+
+def test_gemini_provider_vertexai_creates_client_with_project_and_location(monkeypatch) -> None:
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
+    monkeypatch.delenv("GOOGLE_CLOUD_PROJECT", raising=False)
+    monkeypatch.delenv("GOOGLE_CLOUD_LOCATION", raising=False)
+
+    captured: dict[str, object] = {}
+    original_client = None
+
+    from google import genai as real_genai
+
+    original_client = real_genai.Client
+
+    class _CapturingClient:
+        def __init__(self, **kwargs: object) -> None:
+            captured.update(kwargs)
+
+    monkeypatch.setattr(real_genai, "Client", _CapturingClient)
+
+    provider = GeminiProvider(vertexai=True, project="proj-1", location="us-central1")
+    provider._get_client()
+
+    assert captured["vertexai"] is True
+    assert captured["project"] == "proj-1"
+    assert captured["location"] == "us-central1"
+
+
+def test_gemini_provider_vertexai_env_vars(monkeypatch) -> None:
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
+    monkeypatch.setenv("GOOGLE_CLOUD_PROJECT", "env-project")
+    monkeypatch.setenv("GOOGLE_CLOUD_LOCATION", "asia-east1")
+
+    provider = GeminiProvider(vertexai=True)
+    assert provider._project == "env-project"
+    assert provider._location == "asia-east1"
