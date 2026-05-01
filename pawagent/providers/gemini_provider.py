@@ -2,9 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
-import mimetypes
 import os
-import time
 from pathlib import Path
 from typing import Any
 
@@ -14,11 +12,9 @@ from pawagent.models.media import ImageInput
 from pawagent.providers.base import BaseProvider
 from pawagent.providers.errors import ProviderAuthenticationError, ProviderExecutionError, ProviderOutputParseError
 from pawagent.providers.parsing import normalize_expression_payload, normalize_unified_payload, parse_json_text
+from pawagent.video import preprocess as video_preprocess
 
 logger = logging.getLogger(__name__)
-
-_VIDEO_FILE_POLL_INTERVAL_SECONDS = 5
-_VIDEO_FILE_MAX_POLLS = 60
 
 
 class GeminiProvider(BaseProvider):
@@ -56,25 +52,11 @@ class GeminiProvider(BaseProvider):
         return self._parse_response(output_text)
 
     def analyze_video(self, video_path: str, prompt: str) -> dict[str, object]:
-        path = Path(video_path)
-        logger.debug("Gemini analyzing video: %s (model=%s)", path, self._model)
-        client = self._get_client()
         try:
-            uploaded = self._upload_video_file(client, path)
-            video_file = self._wait_for_video_file(client, uploaded)
-            response = client.models.generate_content(
-                model=self._model,
-                contents=[video_file, self._build_prompt(prompt)],
-                config={"response_mime_type": "application/json"},
-            )
-        except ProviderExecutionError:
-            raise
+            storyboard = video_preprocess.prepare_video_storyboard(Path(video_path))
         except Exception as exc:
-            raise ProviderExecutionError(f"Gemini video request failed: {exc}") from exc
-        output_text = getattr(response, "text", "")
-        if not output_text:
-            raise ProviderOutputParseError("Gemini video response did not contain text output.")
-        return self._parse_response(output_text)
+            raise ProviderExecutionError(f"Gemini video preprocessing failed: {exc}") from exc
+        return self.analyze_image(storyboard, video_preprocess.build_storyboard_prompt(prompt))
 
     def _get_client(self) -> Any:
         if self._client is not None:
@@ -109,37 +91,6 @@ class GeminiProvider(BaseProvider):
             raise
 
         return types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
-
-    def _upload_video_file(self, client: Any, path: Path) -> Any:
-        guessed_mime_type = mimetypes.guess_type(path.name)[0]
-        if guessed_mime_type:
-            try:
-                return client.files.upload(file=path, config={"mime_type": guessed_mime_type})
-            except TypeError:
-                # Older SDK variants may not accept config for upload().
-                return client.files.upload(file=path)
-        return client.files.upload(file=path)
-
-    def _wait_for_video_file(self, client: Any, uploaded: Any) -> Any:
-        current = uploaded
-        for _ in range(_VIDEO_FILE_MAX_POLLS):
-            state_name = self._get_file_state_name(current)
-            if state_name == "ACTIVE":
-                return current
-            if state_name in {"FAILED", "CANCELLED"}:
-                raise ProviderExecutionError(f"Gemini video file processing ended in state {state_name}.")
-            time.sleep(_VIDEO_FILE_POLL_INTERVAL_SECONDS)
-            current = client.files.get(name=current.name)
-        raise ProviderExecutionError("Gemini video file did not become ACTIVE before timeout.")
-
-    def _get_file_state_name(self, file_obj: Any) -> str:
-        state = getattr(file_obj, "state", None)
-        if state is None:
-            return ""
-        if isinstance(state, str):
-            return state.upper()
-        name = getattr(state, "name", "")
-        return str(name).upper()
 
     def _build_prompt(self, prompt: str) -> str:
         return prompt

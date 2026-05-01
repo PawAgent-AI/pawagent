@@ -17,8 +17,7 @@ PawAgent is a library, not a web service. It is intended to sit underneath a sep
 
 - Core media analysis: implemented
 - Image and short-video task views: implemented
-- Gemini API video analysis: implemented natively
-- OpenAI / Claude / CLI providers video analysis: implemented via local storyboard fallback
+- Gemini / OpenAI / Claude / CLI providers video analysis: implemented via local storyboard fallback
 - Breed and species identification: implemented
 - Identity verification: implemented
 - Real local identity path (`maskrcnn + openclip`): implemented
@@ -184,8 +183,7 @@ Built-in provider options:
 
 Video support notes:
 
-- `gemini`: native video upload and analysis
-- `openai`, `claude`, `codex`, `gemini-cli`, `claude-cli`: local `ffmpeg` storyboard fallback, then image analysis
+- `gemini`, `openai`, `claude`, `codex`, `gemini-cli`, `claude-cli`: local `ffmpeg` storyboard fallback, then image analysis
 - storyboard fallback requires local `ffmpeg` and `ffprobe`
 
 ### OpenAI
@@ -206,7 +204,7 @@ pawagent --provider gemini --gemini-model gemini-2.5-flash analyze-emotion dog.j
 pawagent --provider gemini --gemini-model gemini-2.5-flash analyze-behavior clip.mp4 --pet-id pet-1 --pet-name Milo --modality video
 ```
 
-Gemini uses native video upload for `--modality video`.
+Gemini uses the local storyboard fallback for `--modality video`.
 
 ### Claude
 
